@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using TMPro;
 using UnityEngine.SceneManagement;
+using static PieceLocations;
 
 public class UIManagement : MonoBehaviour
 {
@@ -100,17 +101,17 @@ public class UIManagement : MonoBehaviour
             }
         }
 
-        int material = CalculateMaterial(out bool white);
+        int material = CalculateMaterial(pieces, out bool white);
 
         if (material != 0)
         {
             if (white)
             {
-                leftPieces += "+" + material.ToString();
+                leftPieces += "+" + Math.Abs(material).ToString();
             }
             else
             {
-                rightPieces += "+" + material.ToString();
+                rightPieces += "+" + Math.Abs(material).ToString();
             }
         }
 
@@ -123,12 +124,13 @@ public class UIManagement : MonoBehaviour
     /// <summary>
     /// Returns the difference in material left on the board.
     /// </summary>
+    /// <param name="pieces">The set of pieces to be analyzed.</param>
     /// <param name="white">If white has more material the value is true.</param>
     /// <return>The difference in material.</return>
-    public static int CalculateMaterial(out bool white)
+    public static int CalculateMaterial(List<Piece> pieces, out bool white)
     {
         int materialDifference = 0;
-        foreach(PieceLocations.Piece piece in PieceLocations.pieces) // Loops over every piece
+        foreach(Piece piece in pieces) // Loops over every piece
         {
             if (piece.White)
             {
@@ -148,11 +150,24 @@ public class UIManagement : MonoBehaviour
         {
             white = true;
         } 
-        return Math.Abs(materialDifference);
+        return materialDifference;
     }
 
+    /// <summary>
+    /// Starts the game against another user.
+    /// </summary>
     public static void StartGame()
     {
+        PieceMovement.solo = false;
+        SceneManager.LoadScene("ChessBoard");
+    }
+
+    /// <summary>
+    /// Starts the game against another the computer.
+    /// </summary>
+    public static void StartComputerGame()
+    {
+        PieceMovement.solo = true;
         SceneManager.LoadScene("ChessBoard");
     }
 

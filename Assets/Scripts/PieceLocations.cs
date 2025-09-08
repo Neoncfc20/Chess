@@ -1,7 +1,11 @@
 using System.Collections.Generic;
+using System.Drawing;
+using System.Threading;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using static PieceMovement;
 
 public class PieceLocations : MonoBehaviour
 {
@@ -26,7 +30,6 @@ public class PieceLocations : MonoBehaviour
             Object.transform.tag = "Piece";
             Object.transform.position = new Vector3(CordX, CordY,.5f);
             Object.AddComponent<PolygonCollider2D>();
-            //Object.AddComponent<PieceLocations>();
         }
 
         public PieceType Type { get; set; }
@@ -208,12 +211,34 @@ public class PieceLocations : MonoBehaviour
     /// </summary>
     public static void ResetGame()
     {
-        foreach(Piece piece in pieces.ToListPooled())
+        FixVariables();
+        IntializeBoard();
+        Destroy(openPopup);
+        openPopup = null;
+    }
+
+    /// <summary>
+    /// Resets the board to its original state and returns the user to the main menu.
+    /// </summary>
+    public static void ReturnToMenu()
+    {
+        FixVariables();
+        SceneManager.LoadScene("Home Screen");
+        Destroy(openPopup);
+        openPopup = null;
+    }
+
+    /// <summary>
+    /// Fixes all of the variable to their initial state.
+    /// </summary>
+    public static void FixVariables()
+    {
+        foreach (Piece piece in pieces.ToListPooled())
         {
             Destroy(piece.Object);
             pieces.Remove(piece);
         }
-        foreach(string pieceType in UIManagement.whiteRemovedPieces.Keys.ToListPooled())
+        foreach (string pieceType in UIManagement.whiteRemovedPieces.Keys.ToListPooled())
         {
             UIManagement.whiteRemovedPieces[pieceType] = 0;
         }
@@ -223,8 +248,22 @@ public class PieceLocations : MonoBehaviour
         }
         UIManagement.PrintRemovedPieces();
 
-        PieceMovement.ResetGlobals();
+        ResetGlobals();
+    }
 
-        IntializeBoard();
+    /// <summary>
+    /// Moves a piece and displays the movement over a second period.
+    /// </summary>
+    public static void MovePiece()
+    {
+        float t = moveCount / 50.0f;
+        selectedObject.transform.position = Vector3.Lerp(start, end, t);
+
+        if (moveCount == 50)
+        {
+            moveCount = 0;
+            pieceMoving = false;
+        }
+        moveCount++;
     }
 }

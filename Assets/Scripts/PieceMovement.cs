@@ -3,16 +3,23 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using System;
+using static PieceLocations;
 using UnityEngine.UIElements;
+using System.Threading;
 
 public class PieceMovement : MonoBehaviour
 {
-    static PieceLocations.Piece selectedPiece; // The currently selected piece
-    GameObject selectedObject; // The selected object on the screen (Piece, Square, Circle)
-    static GameObject openPopup; // A game object to track the popup currently open on the screen
+    static Piece selectedPiece; // The currently selected piece
+    public static GameObject selectedObject; // The selected object on the screen (Piece, Square, Circle)
+    public static GameObject openPopup; // A game object to track the popup currently open on the screen
     static List<GameObject> circles = new List<GameObject>(); // A list storing all the circles that appear for a player's potential moves
     static bool clicking = false; // Makes sure the user can't perform multiple inputs while the code is running
     static bool whiteMove = true; // Determines which player's move it is
+    public static bool solo = false; // Determines if the player is playing against a CPU or a real player
+    public static bool pieceMoving = false; // Determines if a piece is moving or not
+    public static Vector3 start; // The starting location of a piece move
+    public static Vector3 end; // The ending location of a piece move
+    public static int moveCount = 0; // The count of how far the piece has moved
 
     // A set of four booleans to determine if castling is legal for either player for both directions
     static bool whiteCastleLeft = true;
@@ -21,88 +28,112 @@ public class PieceMovement : MonoBehaviour
     static bool blackCastleRight = true;
 
 
+    void FixedUpdate() // Used to move pieces and stop actions until the move is complete
+    {
+        if (pieceMoving)
+        {
+            if (!clicking)
+            {
+                MovePiece();
+            }
+        }
+    }
+
     // Update is called once per frame
     void Update()
     {
         GameObject piece;
         GameObject circle;
 
-        if (!clicking && Input.GetMouseButtonDown(0)) // Makes sure the game is ready for another input
+        
+        if (!pieceMoving) // Makes sure a piece isn't moving before allowing input
         {
-            clicking = true; // Sets the state to clicking
-
-            // Set of code to get the object the user clicked on
-            Vector3 worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            worldPoint.z = Camera.main.transform.position.z;
-            Ray ray = new Ray(worldPoint, new Vector3(0, 0, 1));
-            RaycastHit2D hit = Physics2D.GetRayIntersection(ray);
-
-            if (hit.collider) // Checks if the user clicked on anything
+            if (!whiteMove && solo && openPopup is null) // AI Move
             {
-                if (hit.collider.tag == "Piece") // If the player clicks on a piece
+                ChessAI.GetBestMove();
+                whiteMove = !whiteMove; // Changing whose move it is
+            }
+
+            if (!clicking && Input.GetMouseButtonDown(0)) // Makes sure the game is ready for another input
+            {
+                clicking = true; // Sets the state to clicking
+
+                // Set of code to get the object the user clicked on
+                Vector3 worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                worldPoint.z = Camera.main.transform.position.z;
+                Ray ray = new Ray(worldPoint, new Vector3(0, 0, 1));
+                RaycastHit2D hit = Physics2D.GetRayIntersection(ray);
+
+                if (hit.collider) // Checks if the user clicked on anything
                 {
-                    RemoveMoves(); // Removes any circles on the screen
-                    piece = hit.transform.gameObject; 
-                    selectedObject = piece;
-                    Vector3 coor = piece.transform.position;
-                    selectedPiece = PieceLocations.GetPieceCord(coor.x, coor.y);
-                    if (selectedPiece == null) { return; }
-                    if (selectedPiece.White != whiteMove || openPopup != null) // Checking to make sure it's the correct player's turn
-                    {                                                            // And that there is no popup open
+                    if (hit.collider.tag == "Piece") // If the player clicks on a piece
+                    {
+                        RemoveMoves(); // Removes any circles on the screen
+                        piece = hit.transform.gameObject;
+                        selectedObject = piece;
+                        Vector3 coor = piece.transform.position;
+                        selectedPiece = GetPieceCord(coor.x, coor.y);
+                        if (selectedPiece == null) { return; }
+                        if (selectedPiece.White != whiteMove || openPopup != null) // Checking to make sure it's the correct player's turn
+                        {                                                            // And that there is no popup open
+                            return;
+                        }
+                        List<int[]> moves = GetMoves(selectedPiece); // Determines every potential move for the selcted piece
+                        SetMoves(moves); // Puts those moves on the board
+                    }
+                    else if (hit.collider.tag == "Move") // If the player selects a circle (spot to move a piece to)
+                    {
+                        circle = hit.transform.gameObject;
+                        Vector3 coor = circle.transform.position;
+
+                        Piece attacked = GetPiece(CoorToTile(coor.x), CoorToTile(coor.y));
+
+                        // Check to see if the piece is moving onto another piece
+
+                        if (attacked != null)
+                        {
+                            Destroy(attacked.Object); // Removing the attacked piece
+                            pieces.Remove(attacked);
+                        }
+
+                        CheckCastleStatus(selectedPiece, attacked); // Removing Castling Ability if the Rook or Pawn was moved
+
+                        if (selectedPiece.Type.Type == "King" && Math.Abs(CoorToTile(coor.x) - selectedPiece.X) == 2)
+                        {
+                            MoveCastleRook(selectedPiece, CoorToTile(coor.x)); // Performing castling
+                        }
+                        selectedPiece.X = CoorToTile(coor.x); // Moving the piece
+                        selectedPiece.Y = CoorToTile(coor.y);
+
+                        pieceMoving = true;
+                        start = selectedObject.transform.position;
+                        end = new Vector3(coor.x, coor.y, .5f);
+
+                        if (selectedPiece.Type.Type.Contains("Pawn")) // Adding a condition for pawn specialties
+                        {
+                            PromotionCheck(selectedPiece);
+                            selectedPiece.PawnStart = false; // Moved off its starting square
+                        }
+
+                        if (attacked != null)
+                        {
+                            UIManagement.AddRemovedPiece(attacked); // Removing the attacked piece if there was one
+                        }
+
+                        RemoveMoves(); // Removing the circles from the board
+                        whiteMove = !whiteMove; // Changing whose move it is
+
+                        Checkmate(); // Checks to see if checkmate was achieved
+                    }
+                    else
+                    {
                         return;
                     }
-                    List<int[]> moves = GetMoves(selectedPiece); // Determines every potential move for the selcted piece
-                    SetMoves(moves); // Puts those moves on the board
                 }
-                else if (hit.collider.tag == "Move") // If the player selects a circle (spot to move a piece to)
-                {
-                    circle = hit.transform.gameObject;
-                    Vector3 coor = circle.transform.position;
 
-                    PieceLocations.Piece attacked = PieceLocations.GetPiece(PieceLocations.CoorToTile(coor.x), PieceLocations.CoorToTile(coor.y));
-                        
-                    // Check to see if the piece is moving onto another piece
 
-                    if (attacked != null) 
-                    {
-                        Destroy(attacked.Object); // Removing the attacked piece
-                        PieceLocations.pieces.Remove(attacked);
-                    }
-
-                    CheckCastleStatus(selectedPiece, attacked); // Removing Castling Ability if the Rook or Pawn was moved
-
-                    if (selectedPiece.Type.Type == "King" && Math.Abs(PieceLocations.CoorToTile(coor.x) - selectedPiece.X) == 2)
-                    {
-                        MoveCastleRook(selectedPiece, PieceLocations.CoorToTile(coor.x)); // Performing castling
-                    }
-
-                    selectedPiece.X = PieceLocations.CoorToTile(coor.x); // Moving the piece
-                    selectedPiece.Y = PieceLocations.CoorToTile(coor.y);
-                    selectedObject.transform.position = coor;
-
-                    if (selectedPiece.Type.Type.Contains("Pawn")) // Adding a condition for pawn specialties
-                    {
-                        PromotionCheck(selectedPiece);
-                        selectedPiece.PawnStart = false; // Moved off its starting square
-                    }
-
-                    if (attacked != null)
-                    {
-                        UIManagement.AddRemovedPiece(attacked); // Removing the attacked piece if there was one
-                    }
-
-                    RemoveMoves(); // Removing the circles from the board
-                    whiteMove = !whiteMove; // Changing whose move it is
-
-                    Checkmate(); // Checks to see if checkmate was achieved
-                }
-                else
-                {
-                    return;
-                }
             }
         }
-
         if (Input.GetMouseButtonUp(0))
         {
             clicking = false; // Gets out of the clicking state
@@ -114,7 +145,7 @@ public class PieceMovement : MonoBehaviour
     /// </summary>
     /// <param name="piece">The piece being moved.</param>
     /// <return>A list of coordinates with all potential moves</return>
-    public static List<int[]> GetMoves(PieceLocations.Piece piece)
+    public static List<int[]> GetMoves(Piece piece)
     {
         List<int[]> moves = new List<int[]>();
         int originalX = piece.X;
@@ -142,7 +173,8 @@ public class PieceMovement : MonoBehaviour
 
                 if (Blocked(tileX, tileY, out bool white)) // Checking to see if a piece is blocking a movement lane
                 {
-                    if (white != piece.White && (!piece.Type.Type.Contains("Pawn") || (dir[0] != 0 && i == 1))) { // If the piece blocking is the same type exclude the option
+                    if (white != piece.White && (!piece.Type.Type.Contains("Pawn") || (dir[0] != 0 && i == 1)))
+                    { // If the piece blocking is the same type exclude the option
                         if (MoveLogic(tileX, tileY, piece, originalX, originalY, out int[] move))
                         {
                             moves.Add(move);
@@ -150,12 +182,16 @@ public class PieceMovement : MonoBehaviour
                     }
                     break;
                 }
-                else { if (!OB(tileX, tileY)) {
+                else
+                {
+                    if (!OB(tileX, tileY))
+                    {
                         if ((!piece.Type.Type.Contains("Pawn") || dir[0] == 0) && MoveLogic(tileX, tileY, piece, originalX, originalY, out int[] move))
                         {
                             moves.Add(move);
                         }
-                    } else { break; } 
+                    }
+                    else { break; }
                 }
             }
         }
@@ -172,13 +208,13 @@ public class PieceMovement : MonoBehaviour
     /// <param name="originalX">X position of the piece before the move (Board).</param>
     /// <param name="originalY">Y position of the piece before the move (Board).</param>
     /// <return>If the move is legal</return>
-    public static bool MoveLogic(int tileX, int tileY, PieceLocations.Piece piece, int originalX, int originalY, out int[] move )
+    public static bool MoveLogic(int tileX, int tileY, Piece piece, int originalX, int originalY, out int[] move)
     {
         move = null;
-        PieceLocations.Piece attacked = PieceLocations.GetPiece(tileX, tileY);
+        Piece attacked = GetPiece(tileX, tileY);
         if (attacked != null && attacked.White != piece.White)
         {
-            PieceLocations.pieces.Remove(attacked);
+            pieces.Remove(attacked);
         }
         piece.X = tileX; piece.Y = tileY;
         if (!InCheck(piece.White))
@@ -187,18 +223,19 @@ public class PieceMovement : MonoBehaviour
             piece.X = originalX; piece.Y = originalY;
             if (attacked != null)
             {
-                PieceLocations.pieces.Add(attacked);
+                pieces.Add(attacked);
             }
             return true;
         }
-        else { 
+        else
+        {
             piece.X = originalX; piece.Y = originalY;
             if (attacked != null)
             {
-                PieceLocations.pieces.Add(attacked);
+                pieces.Add(attacked);
             }
         }
-        
+
         return false;
     }
 
@@ -209,7 +246,7 @@ public class PieceMovement : MonoBehaviour
     /// <param name="x">X value (Board)</param>
     /// <param name="y">Y value (Board)</param>
     /// <return>If the piece can attack the square.</return>
-    public static bool CanAttackSquare(PieceLocations.Piece piece, int x, int y)
+    public static bool CanAttackSquare(Piece piece, int x, int y)
     {
         foreach (int[] dir in piece.Type.Dirs)
         {
@@ -243,8 +280,8 @@ public class PieceMovement : MonoBehaviour
     public static bool Blocked(int x, int y, out bool white)
     {
         white = true;
-        PieceLocations.Piece piece = PieceLocations.GetPiece(x, y);
-        if (piece == null) { return false;}
+        Piece piece = GetPiece(x, y);
+        if (piece == null) { return false; }
         else
         {
             white = piece.White;
@@ -273,16 +310,16 @@ public class PieceMovement : MonoBehaviour
     /// <param name="moves">All possible moves.</param>
     public static void SetMoves(List<int[]> moves)
     {
-        
+
         foreach (int[] move in moves)
         {
-            float x = PieceLocations.TileToCoor(move[0]);
-            float y = PieceLocations.TileToCoor(move[1]);
+            float x = TileToCoor(move[0]);
+            float y = TileToCoor(move[1]);
 
             GameObject prefab = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/SelectCircle.prefab", typeof(GameObject)) as GameObject;
             GameObject circle = Instantiate(prefab, Vector3.zero, Quaternion.identity);
 
-            circle.transform.position = new Vector3(x,y,-1);
+            circle.transform.position = new Vector3(x, y, -1);
             circle.transform.localScale = new Vector3(.5f, .5f);
             circle.AddComponent<PolygonCollider2D>();
             circle.transform.tag = "Move";
@@ -309,14 +346,14 @@ public class PieceMovement : MonoBehaviour
     /// <return>If the king is in check.</return>
     public static bool InCheck(bool white)
     {
-        PieceLocations.Piece king = null;
-        foreach (PieceLocations.Piece piece in PieceLocations.pieces) // Finding the correct king piece
+        Piece king = null;
+        foreach (Piece piece in pieces) // Finding the correct king piece
         {
             if (piece.White == white && piece.Type.Type == "King")
             {
                 king = piece;
                 break;
-            } 
+            }
         }
         return !SquareSafe(king.X, king.Y, white);
     }
@@ -330,7 +367,7 @@ public class PieceMovement : MonoBehaviour
     /// <return>If the square is safe.</return>
     public static bool SquareSafe(int x, int y, bool white)
     {
-        foreach (PieceLocations.Piece piece in PieceLocations.pieces) // See if any pieces can attack the king
+        foreach (Piece piece in pieces) // See if any pieces can attack the king
         {
             if (piece.White != white)
             {
@@ -347,7 +384,7 @@ public class PieceMovement : MonoBehaviour
     /// Checks to see if a pawn needs to be promoted and opens the popup if so.
     /// </summary>
     /// <param name="piece">The piece being checked</param>
-    public static void PromotionCheck(PieceLocations.Piece piece)
+    public static void PromotionCheck(Piece piece)
     {
         if (piece.White && piece.Y == 7)
         {
@@ -370,8 +407,8 @@ public class PieceMovement : MonoBehaviour
     public static void PromotionHandler(string pieceType)
     {
         Destroy(selectedPiece.Object);
-        PieceLocations.pieces.Remove(selectedPiece);
-        PieceLocations.pieces.Add(new PieceLocations.Piece(pieceType, selectedPiece.White, selectedPiece.X, selectedPiece.Y));
+        pieces.Remove(selectedPiece);
+        pieces.Add(new Piece(pieceType, selectedPiece.White, selectedPiece.X, selectedPiece.Y));
         Destroy(openPopup);
         openPopup = null;
         UIManagement.PrintRemovedPieces();
@@ -388,11 +425,12 @@ public class PieceMovement : MonoBehaviour
         castles = new List<int[]>();
         if (white)
         {
-            if (whiteCastleLeft && PieceLocations.GetPiece(1, 0) == null && PieceLocations.GetPiece(2, 0) == null && PieceLocations.GetPiece(3, 0) == null
-                && SquareSafe(1, 0, white) && SquareSafe(2, 0, white) && SquareSafe(3, 0, white) && SquareSafe(0, 0, white)) {
+            if (whiteCastleLeft && GetPiece(1, 0) == null && GetPiece(2, 0) == null && GetPiece(3, 0) == null
+                && SquareSafe(1, 0, white) && SquareSafe(2, 0, white) && SquareSafe(3, 0, white) && SquareSafe(0, 0, white))
+            {
                 castles.Add(new int[] { 2, 0 });
             }
-            if (whiteCastleRight && PieceLocations.GetPiece(5, 0) == null && PieceLocations.GetPiece(6, 0) == null
+            if (whiteCastleRight && GetPiece(5, 0) == null && GetPiece(6, 0) == null
                 && SquareSafe(5, 0, white) && SquareSafe(6, 0, white) && SquareSafe(7, 0, white))
             {
                 castles.Add(new int[] { 6, 0 });
@@ -400,12 +438,12 @@ public class PieceMovement : MonoBehaviour
         }
         else
         {
-            if (blackCastleLeft && PieceLocations.GetPiece(1, 7) == null && PieceLocations.GetPiece(2, 7) == null && PieceLocations.GetPiece(3, 7) == null
+            if (blackCastleLeft && GetPiece(1, 7) == null && GetPiece(2, 7) == null && GetPiece(3, 7) == null
                 && SquareSafe(1, 7, white) && SquareSafe(2, 7, white) && SquareSafe(3, 7, white) && SquareSafe(0, 7, white))
             {
                 castles.Add(new int[] { 2, 7 });
             }
-            if (blackCastleRight && PieceLocations.GetPiece(5, 7) == null && PieceLocations.GetPiece(6, 7) == null
+            if (blackCastleRight && GetPiece(5, 7) == null && GetPiece(6, 7) == null
                 && SquareSafe(5, 7, white) && SquareSafe(6, 7, white) && SquareSafe(7, 7, white))
             {
                 castles.Add(new int[] { 6, 7 });
@@ -423,7 +461,7 @@ public class PieceMovement : MonoBehaviour
     /// </summary>
     /// <param name="piece">The piece being moved.</param>
     /// <param name="attacked">The piece potentially being removed.</param>
-    public static void CheckCastleStatus(PieceLocations.Piece piece, PieceLocations.Piece attacked)
+    public static void CheckCastleStatus(Piece piece, Piece attacked)
     {
         if (selectedPiece.Type.Type == "King") // Moved the king
         {
@@ -496,41 +534,41 @@ public class PieceMovement : MonoBehaviour
     /// </summary>
     /// <param name="king">The king being castled.</param>
     /// <param name="x">The x position the king is moving to (Board).</param>
-    public static void MoveCastleRook(PieceLocations.Piece king, int x)
+    public static void MoveCastleRook(Piece king, int x)
     {
-        PieceLocations.Piece rook = null;
+        Piece rook = null;
         if (king.White)
         {
             if (x == 2)
             {
-                rook = PieceLocations.GetPiece(0, 0);
+                rook = GetPiece(0, 0);
                 rook.X = 3;
                 rook.Y = 0;
-                rook.Object.transform.position = new Vector3(PieceLocations.TileToCoor(rook.X), PieceLocations.TileToCoor(rook.Y));
+                rook.Object.transform.position = new Vector3(TileToCoor(rook.X), TileToCoor(rook.Y));
             }
             else
             {
-                rook = PieceLocations.GetPiece(7, 0);
+                rook = GetPiece(7, 0);
                 rook.X = 5;
                 rook.Y = 0;
-                rook.Object.transform.position = new Vector3(PieceLocations.TileToCoor(rook.X), PieceLocations.TileToCoor(rook.Y));
+                rook.Object.transform.position = new Vector3(TileToCoor(rook.X), TileToCoor(rook.Y));
             }
         }
         else
         {
             if (x == 2)
             {
-                rook = PieceLocations.GetPiece(0, 7);
+                rook = GetPiece(0, 7);
                 rook.X = 3;
                 rook.Y = 7;
-                rook.Object.transform.position = new Vector3(PieceLocations.TileToCoor(rook.X), PieceLocations.TileToCoor(rook.Y));
+                rook.Object.transform.position = new Vector3(TileToCoor(rook.X), TileToCoor(rook.Y));
             }
             else
             {
-                rook = PieceLocations.GetPiece(7, 7);
+                rook = GetPiece(7, 7);
                 rook.X = 5;
                 rook.Y = 7;
-                rook.Object.transform.position = new Vector3(PieceLocations.TileToCoor(rook.X), PieceLocations.TileToCoor(rook.Y));
+                rook.Object.transform.position = new Vector3(TileToCoor(rook.X), TileToCoor(rook.Y));
             }
         }
     }
@@ -540,11 +578,11 @@ public class PieceMovement : MonoBehaviour
     /// </summary>
     public static void Checkmate()
     {
-        foreach(PieceLocations.Piece piece in PieceLocations.pieces.ToListPooled())
+        foreach (Piece piece in pieces.ToListPooled())
         {
             if (piece.White == whiteMove)
             {
-                if (GetMoves(piece).Count != 0) 
+                if (GetMoves(piece).Count != 0)
                 {
                     return;
                 }
@@ -588,4 +626,4 @@ public class PieceMovement : MonoBehaviour
         openPopup = null;
     }
 }
-                          
+

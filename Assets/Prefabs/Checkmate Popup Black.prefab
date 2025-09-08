@@ -192,6 +192,7 @@ GameObject:
   - component: {fileID: 2041234114924146402}
   - component: {fileID: 5419063101579102453}
   - component: {fileID: 779139536968256838}
+  - component: {fileID: 6260126882845443766}
   m_Layer: 5
   m_Name: Home
   m_TagString: Untagged
@@ -301,7 +302,31 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5419063101579102453}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 6260126882845443766}
+        m_TargetAssemblyTypeName: PieceLocations, Assembly-CSharp
+        m_MethodName: ReturnToMenu
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &6260126882845443766
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1272057997379609839}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0541dc2ce003ce4688edc39c2b7c836, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2056046874707237795
 GameObject:
   m_ObjectHideFlags: 0
