@@ -4,8 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using System;
 using static PieceLocations;
-using UnityEngine.UIElements;
-using System.Threading;
+using TMPro;
 
 public class PieceMovement : MonoBehaviour
 {
@@ -17,9 +16,6 @@ public class PieceMovement : MonoBehaviour
     static bool whiteMove = true; // Determines which player's move it is
     public static bool solo = false; // Determines if the player is playing against a CPU or a real player
     public static bool pieceMoving = false; // Determines if a piece is moving or not
-    public static Vector3 start; // The starting location of a piece move
-    public static Vector3 end; // The ending location of a piece move
-    public static int moveCount = 0; // The count of how far the piece has moved
 
     // A set of four booleans to determine if castling is legal for either player for both directions
     static bool whiteCastleLeft = true;
@@ -45,7 +41,7 @@ public class PieceMovement : MonoBehaviour
         GameObject piece;
         GameObject circle;
 
-        
+
         if (!pieceMoving) // Makes sure a piece isn't moving before allowing input
         {
             if (!whiteMove && solo && openPopup is null) // AI Move
@@ -106,8 +102,8 @@ public class PieceMovement : MonoBehaviour
                         selectedPiece.Y = CoorToTile(coor.y);
 
                         pieceMoving = true;
-                        start = selectedObject.transform.position;
-                        end = new Vector3(coor.x, coor.y, .5f);
+                        movingPieces.Add(new PieceLocations.PieceMovement(selectedObject.transform.position, new Vector3(coor.x, coor.y, .5f), 
+                            selectedObject));
 
                         if (selectedPiece.Type.Type.Contains("Pawn")) // Adding a condition for pawn specialties
                         {
@@ -122,8 +118,6 @@ public class PieceMovement : MonoBehaviour
 
                         RemoveMoves(); // Removing the circles from the board
                         whiteMove = !whiteMove; // Changing whose move it is
-
-                        Checkmate(); // Checks to see if checkmate was achieved
                     }
                     else
                     {
@@ -321,7 +315,7 @@ public class PieceMovement : MonoBehaviour
 
             circle.transform.position = new Vector3(x, y, -1);
             circle.transform.localScale = new Vector3(.5f, .5f);
-            circle.AddComponent<PolygonCollider2D>();
+            //circle.AddComponent<PolygonCollider2D>();
             circle.transform.tag = "Move";
             circles.Add(circle);
         }
@@ -544,14 +538,12 @@ public class PieceMovement : MonoBehaviour
                 rook = GetPiece(0, 0);
                 rook.X = 3;
                 rook.Y = 0;
-                rook.Object.transform.position = new Vector3(TileToCoor(rook.X), TileToCoor(rook.Y));
             }
             else
             {
                 rook = GetPiece(7, 0);
                 rook.X = 5;
                 rook.Y = 0;
-                rook.Object.transform.position = new Vector3(TileToCoor(rook.X), TileToCoor(rook.Y));
             }
         }
         else
@@ -561,16 +553,16 @@ public class PieceMovement : MonoBehaviour
                 rook = GetPiece(0, 7);
                 rook.X = 3;
                 rook.Y = 7;
-                rook.Object.transform.position = new Vector3(TileToCoor(rook.X), TileToCoor(rook.Y));
             }
             else
             {
                 rook = GetPiece(7, 7);
                 rook.X = 5;
                 rook.Y = 7;
-                rook.Object.transform.position = new Vector3(TileToCoor(rook.X), TileToCoor(rook.Y));
             }
         }
+        movingPieces.Add(new PieceLocations.PieceMovement(rook.Object.transform.position,
+            new Vector3(TileToCoor(rook.X), TileToCoor(rook.Y), .5f), rook.Object));
     }
 
     /// <summary>
@@ -578,6 +570,7 @@ public class PieceMovement : MonoBehaviour
     /// </summary>
     public static void Checkmate()
     {
+        StalemateOnMaterial();
         foreach (Piece piece in pieces.ToListPooled())
         {
             if (piece.White == whiteMove)
@@ -589,7 +582,12 @@ public class PieceMovement : MonoBehaviour
             }
         }
         openPopup = null;
-        CheckmatePopup(whiteMove);
+        if (InCheck(whiteMove))
+        {
+            CheckmatePopup(whiteMove);
+            return;
+        }
+        StalematePopup();
     }
 
     /// <summary>
@@ -601,6 +599,7 @@ public class PieceMovement : MonoBehaviour
         if (white)
         {
             GameObject popup = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/Checkmate Popup Black.prefab", typeof(GameObject)) as GameObject;
+            popup.transform.GetChild(0).GetComponent<TMPro.TextMeshProUGUI>().text = "Stalemate\nIt's a Draw"; //"Checkmate\nBlack Wins!";
             GameObject checkmatePopup = Instantiate(popup);
             openPopup = checkmatePopup;
         }
@@ -610,6 +609,21 @@ public class PieceMovement : MonoBehaviour
             GameObject checkmatePopup = Instantiate(popup);
             openPopup = checkmatePopup;
         }
+    }
+
+    /// <summary>
+    /// Opens the stalemate popup.
+    /// </summary>
+    public static void StalematePopup()
+    {
+        GameObject popup = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/Checkmate Popup Black.prefab", typeof(GameObject)) as GameObject;
+        Transform text = popup.transform.GetChild(0);
+        TextMeshProUGUI comp = text.GetComponent<TextMeshProUGUI>();
+        TMP_Text comp2 = text.GetComponent<TMP_Text>();
+        comp.SetText("Stalemate\nIt's a Draw");
+        comp2.text = "Stalemate\nIt's a Draw2";
+        GameObject checkmatePopup = Instantiate(popup);
+        openPopup = checkmatePopup;
     }
 
     /// <summary>

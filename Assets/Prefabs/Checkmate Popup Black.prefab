@@ -25,13 +25,13 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 189319059391661720}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4427241666553423219}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -107,8 +107,8 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1732906319993079860}
   - {fileID: 4752645618323175403}
+  - {fileID: 1732906319993079860}
   - {fileID: 6944553233786313275}
   - {fileID: 1435205956846411524}
   m_Father: {fileID: 0}
@@ -192,7 +192,7 @@ GameObject:
   - component: {fileID: 2041234114924146402}
   - component: {fileID: 5419063101579102453}
   - component: {fileID: 779139536968256838}
-  - component: {fileID: 6260126882845443766}
+  - component: {fileID: 6285276817891844066}
   m_Layer: 5
   m_Name: Home
   m_TagString: Untagged
@@ -303,8 +303,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 6260126882845443766}
-        m_TargetAssemblyTypeName: PieceLocations, Assembly-CSharp
+      - m_Target: {fileID: 6285276817891844066}
+        m_TargetAssemblyTypeName: UIManagement, Assembly-CSharp
         m_MethodName: ReturnToMenu
         m_Mode: 1
         m_Arguments:
@@ -315,7 +315,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &6260126882845443766
+--- !u!114 &6285276817891844066
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -324,7 +324,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1272057997379609839}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f0541dc2ce003ce4688edc39c2b7c836, type: 3}
+  m_Script: {fileID: 11500000, guid: 54b6a7dc21503a342975ef006956eaf4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &2056046874707237795
@@ -474,7 +474,7 @@ GameObject:
   - component: {fileID: 1964887117929748534}
   - component: {fileID: 4639393798822964315}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -493,7 +493,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4427241666553423219}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -744,7 +744,7 @@ GameObject:
   - component: {fileID: 3854546290298625404}
   - component: {fileID: 9183863762635398589}
   - component: {fileID: 2942897894682961367}
-  - component: {fileID: 1293078495870680474}
+  - component: {fileID: 5488198558398999048}
   m_Layer: 5
   m_Name: Play Again
   m_TagString: Untagged
@@ -855,8 +855,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1293078495870680474}
-        m_TargetAssemblyTypeName: PieceLocations, Assembly-CSharp
+      - m_Target: {fileID: 5488198558398999048}
+        m_TargetAssemblyTypeName: UIManagement, Assembly-CSharp
         m_MethodName: ResetGame
         m_Mode: 1
         m_Arguments:
@@ -867,7 +867,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &1293078495870680474
+--- !u!114 &5488198558398999048
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -876,6 +876,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 8917260883143319263}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f0541dc2ce003ce4688edc39c2b7c836, type: 3}
+  m_Script: {fileID: 11500000, guid: 54b6a7dc21503a342975ef006956eaf4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

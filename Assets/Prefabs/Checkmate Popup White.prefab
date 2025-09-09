@@ -327,7 +327,7 @@ GameObject:
   - component: {fileID: 1567298584615975168}
   - component: {fileID: 4802987243599503127}
   - component: {fileID: 235257114707303076}
-  - component: {fileID: 1794929014575047795}
+  - component: {fileID: 3867767781375448729}
   m_Layer: 5
   m_Name: Home
   m_TagString: Untagged
@@ -438,8 +438,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1794929014575047795}
-        m_TargetAssemblyTypeName: PieceLocations, Assembly-CSharp
+      - m_Target: {fileID: 3867767781375448729}
+        m_TargetAssemblyTypeName: UIManagement, Assembly-CSharp
         m_MethodName: ReturnToMenu
         m_Mode: 1
         m_Arguments:
@@ -450,7 +450,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &1794929014575047795
+--- !u!114 &3867767781375448729
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -459,7 +459,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1744160091981361933}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f0541dc2ce003ce4688edc39c2b7c836, type: 3}
+  m_Script: {fileID: 11500000, guid: 54b6a7dc21503a342975ef006956eaf4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &8238134686745479485
@@ -474,7 +474,7 @@ GameObject:
   - component: {fileID: 4390406225221323422}
   - component: {fileID: 8565953356604934751}
   - component: {fileID: 2397186404768887349}
-  - component: {fileID: 2575535491248352216}
+  - component: {fileID: 7399845157551991402}
   m_Layer: 5
   m_Name: Play Again
   m_TagString: Untagged
@@ -585,8 +585,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2575535491248352216}
-        m_TargetAssemblyTypeName: PieceLocations, Assembly-CSharp
+      - m_Target: {fileID: 7399845157551991402}
+        m_TargetAssemblyTypeName: UIManagement, Assembly-CSharp
         m_MethodName: ResetGame
         m_Mode: 1
         m_Arguments:
@@ -597,7 +597,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &2575535491248352216
+--- !u!114 &7399845157551991402
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -606,7 +606,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8238134686745479485}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f0541dc2ce003ce4688edc39c2b7c836, type: 3}
+  m_Script: {fileID: 11500000, guid: 54b6a7dc21503a342975ef006956eaf4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &8854915066737010326

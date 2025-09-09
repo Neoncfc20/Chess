@@ -171,4 +171,26 @@ public class UIManagement : MonoBehaviour
         SceneManager.LoadScene("ChessBoard");
     }
 
+    /// <summary>
+    /// Resets the board to its original state and starts a new game.
+    /// </summary>
+    public static void ResetGame()
+    {
+        FixVariables();
+        InitializeBoard();
+        Destroy(PieceMovement.openPopup);
+        PieceMovement.openPopup = null;
+    }
+
+    /// <summary>
+    /// Resets the board to its original state and returns the user to the main menu.
+    /// </summary>
+    public static void ReturnToMenu()
+    {
+        FixVariables();
+        SceneManager.LoadScene("Home Screen");
+        Destroy(PieceMovement.openPopup);
+        PieceMovement.openPopup = null;
+    }
+
 }

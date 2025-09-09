@@ -10,6 +10,7 @@ using static PieceMovement;
 public class PieceLocations : MonoBehaviour
 {
     public static List<Piece> pieces = new List<Piece>();
+    public static List<PieceMovement> movingPieces = new List<PieceMovement>();
 
     public class Piece
     {
@@ -29,7 +30,8 @@ public class PieceLocations : MonoBehaviour
             Object = Instantiate(pieceObject, Vector3.zero, Quaternion.identity);
             Object.transform.tag = "Piece";
             Object.transform.position = new Vector3(CordX, CordY,.5f);
-            Object.AddComponent<PolygonCollider2D>();
+            Object.AddComponent<BoxCollider2D>();
+            Object.GetComponent<BoxCollider2D>().size = new Vector3(5.55f, 5.55f);
         }
 
         public PieceType Type { get; set; }
@@ -90,15 +92,31 @@ public class PieceLocations : MonoBehaviour
 
     }
 
-    void Start() // Initiallizing all of the pieces
+    public class PieceMovement
     {
-        IntializeBoard();
+        public PieceMovement(Vector3 start, Vector3 end, GameObject piece) 
+        {
+            Start = start;
+            End = end;
+            Piece = piece;
+            MoveCount = 0;
+        }
+
+        public Vector3 Start { get; set; } // The starting location of a piece move
+        public Vector3 End { get; set; } // The ending location of a piece move
+        public float MoveCount { get; set; } // The count of how far the piece has moved
+        public GameObject Piece { get ; set; } // The object being moved
+    }
+
+    private void Start()
+    {
+        InitializeBoard();
     }
 
     /// <summary>
     /// Initializes the board.
     /// </summary>
-    public static void IntializeBoard()
+    public static void InitializeBoard()
     {
         int[] rows = { 0, 1, 6, 7 };
         foreach (int row in rows)
@@ -207,28 +225,6 @@ public class PieceLocations : MonoBehaviour
     }
 
     /// <summary>
-    /// Resets the board to its original state and starts a new game.
-    /// </summary>
-    public static void ResetGame()
-    {
-        FixVariables();
-        IntializeBoard();
-        Destroy(openPopup);
-        openPopup = null;
-    }
-
-    /// <summary>
-    /// Resets the board to its original state and returns the user to the main menu.
-    /// </summary>
-    public static void ReturnToMenu()
-    {
-        FixVariables();
-        SceneManager.LoadScene("Home Screen");
-        Destroy(openPopup);
-        openPopup = null;
-    }
-
-    /// <summary>
     /// Fixes all of the variable to their initial state.
     /// </summary>
     public static void FixVariables()
@@ -256,14 +252,55 @@ public class PieceLocations : MonoBehaviour
     /// </summary>
     public static void MovePiece()
     {
-        float t = moveCount / 50.0f;
-        selectedObject.transform.position = Vector3.Lerp(start, end, t);
-
-        if (moveCount == 50)
+        foreach (PieceMovement mp in movingPieces)
         {
-            moveCount = 0;
+            float t = mp.MoveCount / 75.0f;
+            mp.Piece.transform.position = Vector3.Lerp(mp.Start, mp.End, t);
+
+            if (mp.MoveCount == 75)
+            {
+                movingPieces.Remove(mp);
+                Checkmate(); // Checks to see if checkmate was achieved
+            }
+            mp.MoveCount++;
+        }
+        if (movingPieces.Count == 0)
+        {
             pieceMoving = false;
         }
-        moveCount++;
+    }
+
+    /// <summary>
+    /// Gets the name of the piece prefab.
+    /// </summary>
+    /// <return>If stalemate should be called due to a lack of material on both sides.</return>
+    public static bool StalemateOnMaterial()
+    {
+        int whiteMaterial = 0;
+        int blackMaterial = 0;
+        foreach (Piece piece in pieces) // Loops over every piece
+        {
+            if (piece.White)
+            {
+                if (piece.Type.Type == "WhitePawn") // Returning false if white has a pawn remaining
+                {
+                    return false;
+                }
+                whiteMaterial += UIManagement.materialAmounts[piece.Type.Type]; // Adds material for white pieces
+            }
+            else
+            {
+                if (piece.Type.Type == "BlackPawn") // Returning false if black has a pawn remaining
+                {
+                    return false;
+                }
+                blackMaterial -= UIManagement.materialAmounts[piece.Type.Type]; // Subtracts material for black pieces
+            }
+        }
+        if (whiteMaterial >= 5 || blackMaterial >= 5) 
+        {
+            return false;
+        }
+        return true;
     }
 }

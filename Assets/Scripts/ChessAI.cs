@@ -90,6 +90,12 @@ public class ChessAI : MonoBehaviour
 
         }
 
+        if (finalPiece == null)
+        {
+            StalematePopup();
+            return;
+        }
+
         Piece attacked = GetPiece(finalMove[0], finalMove[1]);
 
         // Check to see if the piece is moving onto another piece
@@ -110,9 +116,8 @@ public class ChessAI : MonoBehaviour
         finalPiece.X = finalMove[0]; // Setting globals to move the piece
         finalPiece.Y = finalMove[1];
         pieceMoving = true;
-        selectedObject = finalPiece.Object;
-        start = finalPiece.Object.transform.position;
-        end = new Vector3(TileToCoor(finalMove[0]), TileToCoor(finalMove[1]), .5f);
+        movingPieces.Add(new PieceLocations.PieceMovement(finalPiece.Object.transform.position, 
+            new Vector3(TileToCoor(finalMove[0]), TileToCoor(finalMove[1]), .5f), finalPiece.Object));
 
         if (finalPiece.Type.Type.Contains("Pawn")) // Adding a condition for pawn specialties
         {
@@ -124,9 +129,5 @@ public class ChessAI : MonoBehaviour
         {
             UIManagement.AddRemovedPiece(attacked); // Removing the attacked piece if there was one
         }
-
-        RemoveMoves(); // Removing the circles from the board
-
-        Checkmate(); // Checks to see if checkmate was achieved
     }
 }
